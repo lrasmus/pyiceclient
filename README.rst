@@ -81,6 +81,7 @@ Where "evaluations" is a list of evaluations; each evaluation is a list of:
 * element 8: evaluation_group_code (e.g., "100")
 
 Where "forecasts" is a list of forecasts; each forecast is a list of:
+
 * element 0: vaccine group name (e.g., "Hep B Vaccine Group")
 * element 1: forecast concept (e.g., "FUTURE_RECOMMENDED")
 * element 2: comma-separated forecast interpretation (e.g., "DUE_IN_FUTURE,HIGH_RISK")
