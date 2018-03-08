@@ -68,7 +68,7 @@ module)
 Where "izs" is a list of immunizations; each immunization is a list of:
  element 0: immunization id
  element 1: date of administration, YYYYMMDD
- element 2: code[: name] (e.g., "03: MMR") (name optional) (CVX for "I", ICD9 for "D")
+ element 2: code[: name] (e.g., "03: MMR") (name optional) (CVX for "I", ICD9/ICD10/SCT for "D")
  element 3: "I" (immunization) or "D" (disease) 
 
 Where "evaluations" is a list of evaluations; each evaluation is a list of:
@@ -88,6 +88,7 @@ Where "forecasts" is a list of forecasts; each forecast is a list of:
  element 2: comma-separated forecast interpretation (e.g., "DUE_IN_FUTURE,HIGH_RISK")
  element 3: due date, YYYYMMDD
  element 4: forecast group code (e.g., "100")
+ element 5: vaccine code recommended (CVX code, if any)
 
 """
 
@@ -116,6 +117,7 @@ ICE_FORECASTS_CONCEPT = 1
 ICE_FORECASTS_INTERP = 2
 ICE_FORECASTS_DUE_DATE = 3
 ICE_FORECASTS_GROUP_CODE = 4
+ICE_FORECASTS_VAC_CODE = 5
 
 #
 # XML templates for ICE web service call - substitutions are marked as %s
@@ -196,13 +198,16 @@ VMR_IZ = '''<substanceAdministrationEvent>
 # VMR_DISEASE: vMR immunity observationResult. substitutions:
 #  UUID
 #  code
+#  code system (2.16.840.1.113883.6.103 for ICD9, 
+#               2.16.840.1.113883.6.90 for ICD10, 
+#               2.16.840.1.113883.6.96 for SNOMED CT)
 #  date_of_observation in YYYYMMDD
 #  date_of_observation in YYYYMMDD
 #
 VMR_DISEASE = '''<observationResult>
   <templateId root="2.16.840.1.113883.3.795.11.6.3.1"/>
   <id root="%s"/>
-  <observationFocus code="%s" codeSystem="2.16.840.1.113883.6.103"/> 
+  <observationFocus code="%s" codeSystem="%s"/> 
   <observationEventTime low="%s" high="%s"/>
   <observationValue>
     <concept code="DISEASE_DOCUMENTED" codeSystem="2.16.840.1.113883.3.795.12.100.8"/>
@@ -223,6 +228,15 @@ VMR_FOOTER = '''</substanceAdministrationEvents>
 # regular expressions
 #
 RE_YYYYMMDD = re.compile("([0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9])")
+RE_ICD9 = re.compile("([V\d]\d{2}(\.?\d{0,2})?|E\d{3}(\.?\d)?|\d{2}(\.?\d{0,2})?)")
+RE_ICD10 = re.compile("([A-TV-Z][0-9][A-Z0-9](\.?[A-Z0-9]{0,4})?)")
+RE_SCT = re.compile("[0-9]{6}[0-9]*")
+
+# code system OIDs
+#
+ICD9_OID = "2.16.840.1.113883.6.103"
+ICD10_OID = "2.16.840.1.113883.6.90"
+SCT_OID = "2.16.840.1.113883.6.96"
 
 #
 # functions
@@ -286,6 +300,10 @@ def process_vmr(in_vmr):
     #
     for substanceAdministrationProposal in vmr_dict['org.opencds.vmr.v1_0.schema.cdsoutput:cdsOutput']['vmrOutput']['patient']['clinicalStatements']['substanceAdministrationProposals']['substanceAdministrationProposal']:
 
+        substance_code = ''
+        if substanceAdministrationProposal['substance']['substanceCode']['@codeSystem'] == '2.16.840.1.113883.12.292':
+            substance_code = substanceAdministrationProposal['substance']['substanceCode']['@code']
+
         for relatedClinicalStatement in substanceAdministrationProposal['relatedClinicalStatement']:
             vaccine_group = relatedClinicalStatement['observationResult']['observationFocus']['@displayName']
             vaccine_group_code = relatedClinicalStatement['observationResult']['observationFocus']['@code']
@@ -300,7 +318,7 @@ def process_vmr(in_vmr):
             if 'proposedAdministrationTimeInterval' in substanceAdministrationProposal:
                 rec_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['proposedAdministrationTimeInterval']['@low'])[0]
 
-        recommendation_list.append([vaccine_group, forecast_concept, forecast_interpretation, rec_date, vaccine_group_code])
+        recommendation_list.append([vaccine_group, forecast_concept, forecast_interpretation, rec_date, vaccine_group_code, substance_code])
     
     return (evaluation_list, recommendation_list)
 
@@ -310,11 +328,16 @@ def data2vmr(data):
     vMR. Assumes only one child (index 0) in the data
     structure. Return vMR.
 
+    To keep the ICE web client-style data structure simple, we accept
+    ICD10, ICD9, or SNOMED CT codes for disease/immunity and figure
+    out ourselves what the coding system is based on regex pattern
+    matching on the code itself.
+
     """
 
     vmr_body = VMR_HEADER % (str(uuid.uuid4()), data[0]['dob'], data[0]['gender'])
     observation_results = ""
-
+    
     for iz in data[0]['izs']:
         code = iz[ICE_IZS_CODE].split(':')[0]
         date = iz[ICE_IZS_DATE]
@@ -322,7 +345,15 @@ def data2vmr(data):
             if iz[ICE_IZS_I_OR_D] == 'I':
                 vmr_body += VMR_IZ % (iz[ICE_IZS_ID], str(uuid.uuid4()), code, date, date)
             if iz[ICE_IZS_I_OR_D] == 'D':
-                observation_results += VMR_DISEASE % (str(uuid.uuid4()), code, date, date)
+                if RE_SCT.match(code):
+                    observation_results += VMR_DISEASE % (str(uuid.uuid4()), code, SCT_OID, date, date)
+                elif RE_ICD10.match(code):
+                    observation_results += VMR_DISEASE % (str(uuid.uuid4()), code, ICD10_OID, date, date)
+                elif RE_ICD9.match(code):
+                    observation_results += VMR_DISEASE % (str(uuid.uuid4()), code, ICD9_OID, date, date)
+                else:
+                    pass
+
 
     if len(observation_results) > 0:
         vmr_body = vmr_body.replace('<observationResults/>','<observationResults>' + observation_results + '</observationResults>')
