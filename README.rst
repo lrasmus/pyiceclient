@@ -114,16 +114,14 @@ Limitations
 
 * Earliest date and Past Due date simply returns whatever ICE
   returns. Therefore, if the ICE server's
-  _output_earliest_and_overdue_dates_ setting in ice.properties file
-  is set to "N", the earliest date will always be empty and the past
-  due date will always be equal to the due date. If the
-  _output_earliest_and_overdue_dates_ setting in ice.properties file
-  is set to "Y", then for supported vaccine groups (as of March 2018
-  they are Meningococcal ACWY, Polio, Rotavirus and Varicella) the
-  earliest date and past due date will be set to the actual earliest
-  date and past due date, and for unsupported vaccine groups the
-  earliest date will always be empty and the past due date will always
-  be equal to the due date.
+  **output_earliest_and_overdue_dates** setting in *ice.properties* is
+  "N", the earliest date will always be empty and the past due date
+  will always be equal to the due date. If the
+  **output_earliest_and_overdue_dates** setting is "Y", then the
+  earliest date and the past due date will be populated for supported
+  vaccine groups (as of March 2018 they are Meningococcal ACWY, Polio,
+  Rotavirus and Varicella) in cases where ICE calculates such dates,
+  and will be empty otherwise.
 
 
 Installation

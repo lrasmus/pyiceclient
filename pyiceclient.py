@@ -323,7 +323,8 @@ def process_vmr(in_vmr):
             earliest_date = ''
             if 'proposedAdministrationTimeInterval' in substanceAdministrationProposal:
                 rec_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['proposedAdministrationTimeInterval']['@low'])[0]
-                pastdue_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['proposedAdministrationTimeInterval']['@high'])[0]
+                if '@high' in substanceAdministrationProposal['proposedAdministrationTimeInterval']:
+                    pastdue_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['proposedAdministrationTimeInterval']['@high'])[0]
             if 'validAdministrationTimeInterval' in substanceAdministrationProposal:
                 earliest_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['validAdministrationTimeInterval']['@low'])[0]
 
