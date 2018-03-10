@@ -31,8 +31,7 @@ import xmltodict # pip install xmltodict
 
 # SERVER_ENDPOINT is the URL of the ICE evaluate web service - intended to be on the localhost
 #
-#SERVER_ENDPOINT = "http://localhost:8080/opencds-decision-support-service/evaluate"
-SERVER_ENDPOINT = "http://cds.hln.com/opencds-decision-support-service/evaluate"
+SERVER_ENDPOINT = "http://localhost:8080/opencds-decision-support-service/evaluate"
 
 # Keep a global session object in order to support HTTP KeepAlive with the ICE service
 #
