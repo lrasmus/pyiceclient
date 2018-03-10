@@ -65,7 +65,7 @@ Where "izs" is a list of immunizations; each immunization is a list of:
 
 * element 0: immunization id
 * element 1: date of administration, YYYYMMDD
-* element 2: code[: name] (e.g., "03: MMR") (name optional) (CVX for "I", ICD9 for "D")
+* element 2: code[: name] (e.g., "03: MMR") (name optional) (CVX for "I", ICD9/ICD10/SCT for "D")
 * element 3: "I" (immunization) or "D" (disease) 
 
 Where "evaluations" is a list of evaluations; each evaluation is a list of:
@@ -87,7 +87,9 @@ Where "forecasts" is a list of forecasts; each forecast is a list of:
 * element 2: comma-separated forecast interpretation (e.g., "DUE_IN_FUTURE,HIGH_RISK")
 * element 3: due date, YYYYMMDD
 * element 4: forecast group code (e.g., "100")
-
+* element 5: vaccine code recommended (CVX code, if any)
+* element 6: earliest date, YYYYMMDD
+* element 7: past due date, YYYYMMDD
 
 
 The ICE Default Immunization Schedule
@@ -106,8 +108,23 @@ interpreting the recommendations.
 Limitations
 ===========
 
-* Like the ICE Web Client, immunity defaults to documentation of
-  disease (as opposed to proof of immunity), and ICD-9 coding.
+* Does not perform error checking on input; for example, invalid CVX
+  codes or invalid evidence of immunity codes will be passed to ICE
+  as-is.
+
+* Earliest date and Past Due date simply returns whatever ICE
+  returns. Therefore, if the ICE server's
+  _output_earliest_and_overdue_dates_ setting in ice.properties file
+  is set to "N", the earliest date will always be empty and the past
+  due date will always be equal to the due date. If the
+  _output_earliest_and_overdue_dates_ setting in ice.properties file
+  is set to "Y", then for supported vaccine groups (as of March 2018
+  they are Meningococcal ACWY, Polio, Rotavirus and Varicella) the
+  earliest date and past due date will be set to the actual earliest
+  date and past due date, and for unsupported vaccine groups the
+  earliest date will always be empty and the past due date will always
+  be equal to the due date.
+
 
 Installation
 ============

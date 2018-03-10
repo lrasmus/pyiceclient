@@ -31,7 +31,8 @@ import xmltodict # pip install xmltodict
 
 # SERVER_ENDPOINT is the URL of the ICE evaluate web service - intended to be on the localhost
 #
-SERVER_ENDPOINT = "http://localhost:8080/opencds-decision-support-service/evaluate"
+#SERVER_ENDPOINT = "http://localhost:8080/opencds-decision-support-service/evaluate"
+SERVER_ENDPOINT = "http://cds.hln.com/opencds-decision-support-service/evaluate"
 
 # Keep a global session object in order to support HTTP KeepAlive with the ICE service
 #
@@ -89,6 +90,8 @@ Where "forecasts" is a list of forecasts; each forecast is a list of:
  element 3: due date, YYYYMMDD
  element 4: forecast group code (e.g., "100")
  element 5: vaccine code recommended (CVX code, if any)
+ element 6: earliest date, YYYYMMDD
+ element 7: past due date, YYYYMMDD
 
 """
 
@@ -118,6 +121,8 @@ ICE_FORECASTS_INTERP = 2
 ICE_FORECASTS_DUE_DATE = 3
 ICE_FORECASTS_GROUP_CODE = 4
 ICE_FORECASTS_VAC_CODE = 5
+ICE_FORECASTS_EARLIEST_DATE = 6
+ICE_FORECASTS_PAST_DUE_DATE = 7
 
 #
 # XML templates for ICE web service call - substitutions are marked as %s
@@ -315,10 +320,15 @@ def process_vmr(in_vmr):
                         forecast_interpretation += ","
                     forecast_interpretation += interpretation['@code']
             rec_date = ''
+            pastdue_date = ''
+            earliest_date = ''
             if 'proposedAdministrationTimeInterval' in substanceAdministrationProposal:
                 rec_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['proposedAdministrationTimeInterval']['@low'])[0]
+                pastdue_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['proposedAdministrationTimeInterval']['@high'])[0]
+            if 'validAdministrationTimeInterval' in substanceAdministrationProposal:
+                earliest_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['validAdministrationTimeInterval']['@low'])[0]
 
-        recommendation_list.append([vaccine_group, forecast_concept, forecast_interpretation, rec_date, vaccine_group_code, substance_code])
+        recommendation_list.append([vaccine_group, forecast_concept, forecast_interpretation, rec_date, vaccine_group_code, substance_code, earliest_date, pastdue_date])
     
     return (evaluation_list, recommendation_list)
 
