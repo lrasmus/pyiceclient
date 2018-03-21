@@ -74,9 +74,9 @@ Where "evaluations" is a list of evaluations; each evaluation is a list of:
 * element 1: date of administration, YYYYMMDD
 * element 2: cvx_code (e.g., "03")
 * element 3: vaccine group name (e.g., "Hep B Vaccine Group")
-* element 4: validity ("true" or "false")
-* element 5: dose number in series (e.g., "1", "2", "3", etc.)
-* element 6  evaluation_code (e.g., "VALID"
+* element 4: validity ("true" or "false" or "unsupported")
+* element 5: dose number in series (e.g., "1", "2", "3", etc., or "0" if unsupported)
+* element 6  evaluation_code (e.g., "VALID")
 * element 7: comma-separated evaluation_interpretation (e.g., "TOO_EARLY_LIVE_VIRUS,BELOW_MINIMUM_INTERVAL")
 * element 8: evaluation_group_code (e.g., "100")
 
@@ -122,6 +122,18 @@ Limitations
   vaccine groups (as of March 2018 they are Meningococcal ACWY, Polio,
   Rotavirus and Varicella) in cases where ICE calculates such dates,
   and will be empty otherwise.
+
+* Immunizations that are unsupported by ICE will return a list item in the evaluations list as follows:
+
+** element 0: immunization id
+** element 1: date of administration, YYYYMMDD
+** element 2: cvx_code (e.g., "03")
+** element 3: vaccine group name ("Unsupported")
+** element 4: validity ("unsupported")
+** element 5: dose number in series ("0")
+** element 6  evaluation_code ("UNSUPPORTED")
+** element 7: comma-separated evaluation_interpretation ("")
+** element 8: evaluation_group_code ("0")
 
 
 Installation

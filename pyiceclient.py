@@ -267,7 +267,6 @@ def process_vmr(in_vmr):
     of an evaluation list and a recommendation list.
 
     """
-    
     evaluation_list = []
     recommendation_list = []
 
@@ -279,26 +278,29 @@ def process_vmr(in_vmr):
         for substanceAdministrationEvent in vmr_dict['org.opencds.vmr.v1_0.schema.cdsoutput:cdsOutput']['vmrOutput']['patient']['clinicalStatements']['substanceAdministrationEvents']['substanceAdministrationEvent']:
             immunization_id = substanceAdministrationEvent['id']['@root']
             cvx = substanceAdministrationEvent['substance']['substanceCode']['@code']
+            date_of_admin = RE_YYYYMMDD.findall(substanceAdministrationEvent['administrationTimeInterval']['@high'])[0]
 
-            for relatedClinicalStatement in substanceAdministrationEvent['relatedClinicalStatement']:
+            if 'relatedClinicalStatement' in substanceAdministrationEvent:
+                for relatedClinicalStatement in substanceAdministrationEvent['relatedClinicalStatement']:
 
-                for inside_substanceAdministrationEvent in relatedClinicalStatement['substanceAdministrationEvent']:
-                    date_of_admin = RE_YYYYMMDD.findall(inside_substanceAdministrationEvent['administrationTimeInterval']['@high'])[0]
-                    is_valid = inside_substanceAdministrationEvent['isValid']['@value']
-                    dose_number = inside_substanceAdministrationEvent['doseNumber']['@value']
-                    evaluation_interpretation = ''
+                    for inside_substanceAdministrationEvent in relatedClinicalStatement['substanceAdministrationEvent']:
+                        is_valid = inside_substanceAdministrationEvent['isValid']['@value']
+                        dose_number = inside_substanceAdministrationEvent['doseNumber']['@value']
+                        evaluation_interpretation = ''
 
-                    for inside_relatedClinicalStatement in inside_substanceAdministrationEvent['relatedClinicalStatement']:
-                        evaluation_code = inside_relatedClinicalStatement['observationResult']['observationValue']['concept']['@code']
-                        evaluation_group = inside_relatedClinicalStatement['observationResult']['observationFocus']['@displayName']
-                        evaluation_group_code = inside_relatedClinicalStatement['observationResult']['observationFocus']['@code']
-                        if 'interpretation' in inside_relatedClinicalStatement['observationResult']:
-                            for interpretation in inside_relatedClinicalStatement['observationResult']['interpretation']:
-                                if len(evaluation_interpretation) > 0:
-                                    evaluation_interpretation += ","
-                                evaluation_interpretation += interpretation['@code']
+                        for inside_relatedClinicalStatement in inside_substanceAdministrationEvent['relatedClinicalStatement']:
+                            evaluation_code = inside_relatedClinicalStatement['observationResult']['observationValue']['concept']['@code']
+                            evaluation_group = inside_relatedClinicalStatement['observationResult']['observationFocus']['@displayName']
+                            evaluation_group_code = inside_relatedClinicalStatement['observationResult']['observationFocus']['@code']
+                            if 'interpretation' in inside_relatedClinicalStatement['observationResult']:
+                                for interpretation in inside_relatedClinicalStatement['observationResult']['interpretation']:
+                                    if len(evaluation_interpretation) > 0:
+                                        evaluation_interpretation += ","
+                                    evaluation_interpretation += interpretation['@code']
 
-                    evaluation_list.append([immunization_id, date_of_admin, cvx, evaluation_group, is_valid, dose_number, evaluation_code, evaluation_interpretation, evaluation_group_code])
+                        evaluation_list.append([immunization_id, date_of_admin, cvx, evaluation_group, is_valid, dose_number, evaluation_code, evaluation_interpretation, evaluation_group_code])
+            else:
+                evaluation_list.append([immunization_id, date_of_admin, cvx, 'Unsupported', 'unsupported', '0', 'UNSUPPORTED', '', '0'])
 
     # forecasts
     #
