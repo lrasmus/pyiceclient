@@ -125,15 +125,15 @@ Limitations
 
 * Immunizations that are unsupported by ICE will return a list item in the evaluations list as follows:
 
-** element 0: immunization id
-** element 1: date of administration, YYYYMMDD
-** element 2: cvx_code (e.g., "03")
-** element 3: vaccine group name ("Unsupported")
-** element 4: validity ("unsupported")
-** element 5: dose number in series ("0")
-** element 6  evaluation_code ("UNSUPPORTED")
-** element 7: comma-separated evaluation_interpretation ("")
-** element 8: evaluation_group_code ("0")
+  * element 0: immunization id
+  * element 1: date of administration, YYYYMMDD
+  * element 2: cvx_code (e.g., "03")
+  * element 3: vaccine group name ("Unsupported")
+  * element 4: validity ("unsupported")
+  * element 5: dose number in series ("0")
+  * element 6  evaluation_code ("UNSUPPORTED")
+  * element 7: comma-separated evaluation_interpretation ("")
+  * element 8: evaluation_group_code ("0")
 
 
 Installation
