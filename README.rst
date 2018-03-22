@@ -149,6 +149,7 @@ Python:
 -------
 
 * pip install xmltodict
+* pip install requests
 
 This project:
 -------------
