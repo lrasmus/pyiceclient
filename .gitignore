@@ -1,0 +1,4 @@
+
+\.idea/
+build/
+pyiceclient/__pycache__/

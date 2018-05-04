@@ -31,7 +31,7 @@ import xmltodict # pip install xmltodict
 
 # SERVER_ENDPOINT is the URL of the ICE evaluate web service - intended to be on the localhost
 #
-SERVER_ENDPOINT = "http://localhost:8080/opencds-decision-support-service/evaluate"
+SERVER_ENDPOINT = "http://localhost/opencds-decision-support-service/evaluate"
 
 # Keep a global session object in order to support HTTP KeepAlive with the ICE service
 #
@@ -246,6 +246,7 @@ SCT_OID = "2.16.840.1.113883.6.96"
 # functions
 #
 
+
 def send_request(in_vmr, as_of_date):
     """Take a vMR string and send it to ICE with the supplied as_of_date
     (YYYY-MM-DD). Return the output vMR string.
@@ -257,9 +258,14 @@ def send_request(in_vmr, as_of_date):
     data = data.replace('\n', '').replace('\r', '').encode('utf-8')
     req = SESS.post(SERVER_ENDPOINT, data=data)
     rspstr = req.content.decode('utf-8')
-    resp_dict = xmltodict.parse(rspstr)
-    b64_response = resp_dict['soap:Envelope']['soap:Body']['ns2:evaluateAtSpecifiedTimeResponse']['evaluationResponse']['finalKMEvaluationResponse']['kmEvaluationResultData']['data']['base64EncodedPayload']
-    return base64.b64decode(b64_response)
+    if req.status_code == 200:
+        resp_dict = xmltodict.parse(rspstr)
+        b64_response = resp_dict['soap:Envelope']['soap:Body']['ns2:evaluateAtSpecifiedTimeResponse']['evaluationResponse']['finalKMEvaluationResponse']['kmEvaluationResultData']['data']['base64EncodedPayload']
+        decoded_response = base64.b64decode(b64_response)
+        return decoded_response
+    else:
+        print('crap: ' + str(req))
+        return "crap"
 
 
 def process_vmr(in_vmr):
