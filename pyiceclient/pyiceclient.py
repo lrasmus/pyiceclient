@@ -13,7 +13,6 @@ See README for important caveats.
 
 __author__      = "HLN Consulting, LLC"
 __copyright__   = "Copyright 2018, HLN Consulting, LLC"
-__license__     = "BSD-2-Clause"
 
 # standard imports
 #

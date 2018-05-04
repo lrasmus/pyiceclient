@@ -16,7 +16,7 @@ import pyiceclient
 import json
 import datetime
 
-with open('test.json') as json_data:
+with open('tests/test.json') as json_data:
     data = json.load(json_data)
 
 request_vmr = pyiceclient.data2vmr(data)

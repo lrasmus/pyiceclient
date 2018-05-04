@@ -2,3 +2,5 @@
 \.idea/
 build/
 pyiceclient/__pycache__/
+
+test_out\.json
