@@ -40,8 +40,7 @@ https://cds.hln.com/iceweb/
 This module is based on the ICE web client data structure, which looks
 like this:
 
-.. code-block::
-
+```
     [
         {
             "id": "Patient ID Alphanumeric",
@@ -55,7 +54,7 @@ like this:
             "forecasts": []
         }
     ]
-
+```
 
 (Note that the ICE web client doesn't actually put evaluations and
 forecasts in its data structure - but we use it here as part of this
@@ -155,12 +154,18 @@ This project:
 -------------
 
 * Download release and unzip to project directory, or git clone <project url>; cd into project directory
-* Modify options in source code as needed
-* Run:
+* Modify options in test_pyiceclient.py as needed
+* Test:
 
-.. code-block::
-
+```
    $ python test_pyiceclient.py
-
-
+```
 * Review output files
+
+Install as module:
+-----------------
+
+```
+python setup.py build
+sudo python setup.py install
+```
