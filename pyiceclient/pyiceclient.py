@@ -28,10 +28,6 @@ import re
 #
 import xmltodict # pip install xmltodict
 
-# SERVER_ENDPOINT is the URL of the ICE evaluate web service - intended to be on the localhost
-#
-SERVER_ENDPOINT = "http://localhost/opencds-decision-support-service/evaluate"
-
 # Keep a global session object in order to support HTTP KeepAlive with the ICE service
 #
 SESS = requests.Session()
@@ -246,7 +242,7 @@ SCT_OID = "2.16.840.1.113883.6.96"
 #
 
 
-def send_request(in_vmr, as_of_date):
+def send_request(in_vmr, ice_service_endpoint, as_of_date):
     """Take a vMR string and send it to ICE with the supplied as_of_date
     (YYYY-MM-DD). Return the output vMR string.
 
@@ -255,7 +251,7 @@ def send_request(in_vmr, as_of_date):
     b64_payload = base64.b64encode(bytes(in_vmr, 'utf-8')).decode('ascii')
     data = POST_PAYLOAD % (as_of_date, b64_payload)
     data = data.replace('\n', '').replace('\r', '').encode('utf-8')
-    req = SESS.post(SERVER_ENDPOINT, data=data)
+    req = SESS.post(ice_service_endpoint, data=data)
     rspstr = req.content.decode('utf-8')
     if req.status_code == 200:
         resp_dict = xmltodict.parse(rspstr)

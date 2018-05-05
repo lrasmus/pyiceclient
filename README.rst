@@ -18,8 +18,8 @@ See license in LICENSE file.
 ICE Software
 ============
 
-This module requiers ICE server software to be accessible via a URL
-specified in pyiceclient.SERVER_ENDPOINT.
+This module requires ICE server software to be accessible via a URL
+specified in the send_request call.
 
 The ICE server software is open source software with an open source
 license available at www.cdsframework.org > ICE > Documentation > Open

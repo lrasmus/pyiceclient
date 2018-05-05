@@ -16,11 +16,14 @@ import pyiceclient
 import json
 import datetime
 
+ICE_SERVICE_ENDPOINT = 'https://cds.hln.com/opencds-decision-support-service/evaluate'
+
+
 with open('tests/test.json') as json_data:
     data = json.load(json_data)
 
 request_vmr = pyiceclient.data2vmr(data)
-response_vmr = pyiceclient.send_request(request_vmr, datetime.date.today().strftime('%Y-%m-%d'))
+response_vmr = pyiceclient.send_request(request_vmr, ICE_SERVICE_ENDPOINT, datetime.date.today().strftime('%Y-%m-%d'))
 (evaluation_list, forecast_list) = pyiceclient.process_vmr(response_vmr)
 data[0]['evaluations'] = evaluation_list
 data[0]['forecasts'] = forecast_list
