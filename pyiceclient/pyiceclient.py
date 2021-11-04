@@ -64,7 +64,7 @@ Where "izs" is a list of immunizations; each immunization is a list of:
  element 0: immunization id
  element 1: date of administration, YYYYMMDD
  element 2: code[: name] (e.g., "03: MMR") (name optional) (CVX for "I", ICD9/ICD10/SCT for "D")
- element 3: "I" (immunization) or "D" (disease) 
+ element 3: "I" (immunization) or "D" (disease)
 
 Where "evaluations" is a list of evaluations; each evaluation is a list of:
  element 0: immunization id
@@ -122,16 +122,13 @@ ICE_FORECASTS_PAST_DUE_DATE = 7
 # XML templates for ICE web service call - substitutions are marked as %s
 #
 
-# POST_PAYLOAD: XML for SOAP call. substitutions: 
+# POST_PAYLOAD: XML for SOAP call. substitutions:
 #  specifiedTime as YYYY-MM-DD
 #  base64EncodedPayload as b64-ascii-encoded vMR
 #
 POST_PAYLOAD = '''<?xml version="1.0" encoding="utf-8"?>
-<S:Envelope xmlns:S="http://www.w3.org/2003/05/soap-envelope">
-  <S:Body>
-    <ns2:evaluateAtSpecifiedTime xmlns:ns2="http://www.omg.org/spec/CDSS/201105/dss">
+    <ns2:evaluate xmlns:ns2="http://www.omg.org/spec/CDSS/201105/dss">
       <interactionId scopingEntityId="gov.nyc.health" interactionId="123456"/>
-      <specifiedTime>%s</specifiedTime>
       <evaluationRequest clientLanguage="" clientTimeZoneOffset="">
         <kmEvaluationRequest>
           <kmId scopingEntityId="org.nyc.cir" businessId="ICE" version="1.0.0"/>
@@ -146,9 +143,7 @@ POST_PAYLOAD = '''<?xml version="1.0" encoding="utf-8"?>
           </data>
         </dataRequirementItemData>
       </evaluationRequest>
-    </ns2:evaluateAtSpecifiedTime>
-  </S:Body>
-</S:Envelope>'''
+    </ns2:evaluate>'''
 
 # VMR_HEADER: vMR header up through substanceAdministrationEvents. substitutions:
 #  UUID
@@ -197,8 +192,8 @@ VMR_IZ = '''<substanceAdministrationEvent>
 # VMR_DISEASE: vMR immunity observationResult. substitutions:
 #  UUID
 #  code
-#  code system (2.16.840.1.113883.6.103 for ICD9, 
-#               2.16.840.1.113883.6.90 for ICD10, 
+#  code system (2.16.840.1.113883.6.103 for ICD9,
+#               2.16.840.1.113883.6.90 for ICD10,
 #               2.16.840.1.113883.6.96 for SNOMED CT)
 #  date_of_observation in YYYYMMDD
 #  date_of_observation in YYYYMMDD
@@ -206,7 +201,7 @@ VMR_IZ = '''<substanceAdministrationEvent>
 VMR_DISEASE = '''<observationResult>
   <templateId root="2.16.840.1.113883.3.795.11.6.3.1"/>
   <id root="%s"/>
-  <observationFocus code="%s" codeSystem="%s"/> 
+  <observationFocus code="%s" codeSystem="%s"/>
   <observationEventTime low="%s" high="%s"/>
   <observationValue>
     <concept code="DISEASE_DOCUMENTED" codeSystem="2.16.840.1.113883.3.795.12.100.8"/>
@@ -242,20 +237,24 @@ SCT_OID = "2.16.840.1.113883.6.96"
 #
 
 
-def send_request(in_vmr, ice_service_endpoint, as_of_date):
+def send_request(in_vmr, ice_service_endpoint):
     """Take a vMR string and send it to ICE with the supplied as_of_date
     (YYYY-MM-DD). Return the output vMR string.
 
     """
 
     b64_payload = base64.b64encode(bytes(in_vmr, 'utf-8')).decode('ascii')
-    data = POST_PAYLOAD % (as_of_date, b64_payload)
+    data = POST_PAYLOAD % (b64_payload)
     data = data.replace('\n', '').replace('\r', '').encode('utf-8')
-    req = SESS.post(ice_service_endpoint, data=data)
+    headers={
+      'Content-type':'application/xml',
+      'Accept':'application/xml'
+    }
+    req = SESS.post(ice_service_endpoint, data=data, headers=headers)
     rspstr = req.content.decode('utf-8')
     if req.status_code == 200:
         resp_dict = xmltodict.parse(rspstr)
-        b64_response = resp_dict['soap:Envelope']['soap:Body']['ns2:evaluateAtSpecifiedTimeResponse']['evaluationResponse']['finalKMEvaluationResponse']['kmEvaluationResultData']['data']['base64EncodedPayload']
+        b64_response = resp_dict['ns2:EvaluationResponse']['finalKMEvaluationResponse']['kmEvaluationResultData']['data']['base64EncodedPayload']
         decoded_response = base64.b64decode(b64_response)
         return decoded_response
     else:
@@ -273,7 +272,7 @@ def process_vmr(in_vmr):
 
     vmr_dict = xmltodict.parse(in_vmr, process_namespaces=True, force_list=('substanceAdministrationEvent', 'relatedClinicalStatement', 'substanceAdministrationProposal', 'interpretation'))
 
-    # evaluations 
+    # evaluations
     #
     if 'substanceAdministrationEvents' in vmr_dict['org.opencds.vmr.v1_0.schema.cdsoutput:cdsOutput']['vmrOutput']['patient']['clinicalStatements']:
         for substanceAdministrationEvent in vmr_dict['org.opencds.vmr.v1_0.schema.cdsoutput:cdsOutput']['vmrOutput']['patient']['clinicalStatements']['substanceAdministrationEvents']['substanceAdministrationEvent']:
@@ -332,7 +331,7 @@ def process_vmr(in_vmr):
                 earliest_date = RE_YYYYMMDD.findall(substanceAdministrationProposal['validAdministrationTimeInterval']['@low'])[0]
 
         recommendation_list.append([vaccine_group, forecast_concept, forecast_interpretation, rec_date, vaccine_group_code, substance_code, earliest_date, pastdue_date])
-    
+
     return (evaluation_list, recommendation_list)
 
 
@@ -350,7 +349,7 @@ def data2vmr(data):
 
     vmr_body = VMR_HEADER % (str(uuid.uuid4()), data[0]['dob'], data[0]['gender'])
     observation_results = ""
-    
+
     for iz in data[0]['izs']:
         code = iz[ICE_IZS_CODE].split(':')[0]
         date = iz[ICE_IZS_DATE]
